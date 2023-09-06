@@ -1,0 +1,3 @@
+name: goodluck-world
+runtime: go
+description: A helloworld project used to demonstrate the ability to integrate GKE and GSM.
