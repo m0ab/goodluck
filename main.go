@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/container"
 	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/projects"
+	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/serviceaccount"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -49,7 +50,29 @@ func main() {
 			return err
 		}
 
+		// Create a GCP service account
+		account, err := serviceaccount.NewAccount(ctx, "secretAccessSvcAccount", &serviceaccount.AccountArgs{
+			Project:  pulumi.String(projectId),
+			AccountId: pulumi.String("secret-accessor-sa"),
+			DisplayName: pulumi.String("secret accessor service account"),
+			Description: pulumi.String("This service account has the secret accessor role"),
+		})
+		if err != nil {
+			return err
+		}
+		
+		// Assign "Secret Accessor" role to the service account
+		_, err = projects.NewIAMMember(ctx, "secretAccessorRole", &projects.IAMMemberArgs{
+			Role:    pulumi.String("roles/secretmanager.secretAccessor"),
+			Member:  pulumi.Sprintf("serviceAccount:%s", account.Email),
+			Project: pulumi.String(projectId),
+		})
+		if err != nil {
+			return err
+		}
+
 		ctx.Export("clusterName", pulumi.String("goodluck-autopilot-gke"))
+		ctx.Export("serviceAccountEmail", account.Email)
 		
 		return nil
 	})
