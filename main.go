@@ -20,14 +20,13 @@ func main() {
 			return err
 		}
 
-		// Create a GKE Autopilot cluster
-		_, err = container.NewCluster(ctx, "goodluck-autopilot-gke", &container.ClusterArgs{
+		// Create a GKE standard cluster
+		_, err = container.NewCluster(ctx, "goodluck-standard-gke", &container.ClusterArgs{
 			Location: pulumi.String("us-central1"),
 			Project: pulumi.String(projectId),
 			InitialNodeCount: pulumi.Int(1),
-			Name: pulumi.String("goodluck-autopilot-gke"),
+			Name: pulumi.String("goodluck-standard-gke"),
 			EnableKubernetesAlpha: pulumi.Bool(false),
-			EnableAutopilot: pulumi.Bool(true),
 			Network: pulumi.String("default"),
 			ReleaseChannel: &container.ClusterReleaseChannelArgs{
 				Channel: pulumi.String("REGULAR"),
@@ -44,6 +43,9 @@ func main() {
 						CidrBlock: pulumi.String("0.0.0.0/0"),
 					},
 				},
+			},
+			WorkloadIdentityConfig: &container.ClusterWorkloadIdentityConfigArgs{
+				WorkloadPool: pulumi.Sprintf("%s.svc.id.goog", projectId),
 			},
 		}, pulumi.DependsOn([]pulumi.Resource{service}))
 		if err != nil {
@@ -71,7 +73,7 @@ func main() {
 			return err
 		}
 
-		ctx.Export("clusterName", pulumi.String("goodluck-autopilot-gke"))
+		ctx.Export("clusterName", pulumi.String("goodluck-standard-gke"))
 		ctx.Export("serviceAccountEmail", account.Email)
 		
 		return nil
