@@ -43,6 +43,8 @@ require (
 	github.com/pkg/term v1.1.0 // indirect
 	github.com/pulumi/pulumi-gcp/sdk/v4 v4.21.0 // indirect
 	github.com/pulumi/pulumi-gcp/sdk/v5 v5.26.0 // indirect
+	github.com/pulumi/pulumi-kubernetes/sdk/v3 v3.30.2 // indirect
+	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.1.1 // indirect
 	github.com/pulumi/pulumi/sdk/v2 v2.25.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect

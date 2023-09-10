@@ -4,7 +4,10 @@ import (
 	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/container"
 	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/projects"
 	"github.com/pulumi/pulumi-gcp/sdk/v5/go/gcp/serviceaccount"
+	"github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/core/v1"
+	"github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes/meta/v1"
 )
 
 func main() {
@@ -52,6 +55,27 @@ func main() {
 			return err
 		}
 
+		// kubeconfig := createKubeconfig(cluster.Endpoint, projectId, "goodluck-standard-gke")
+
+		k8sProvider, err := kubernetes.NewProvider(ctx, "gkeProvider", &kubernetes.ProviderArgs{
+			Kubeconfig: pulumi.String("~/.kube/config"),
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = v1.NewNamespace(ctx, "service-namespace", &v1.NamespaceArgs{
+			Metadata: &metav1.ObjectMetaArgs{
+				Name: pulumi.StringPtr("goodluck"),
+			},
+		}, pulumi.Provider(k8sProvider))
+
+		_, err = v1.NewNamespace(ctx, "gsm-namespace", &v1.NamespaceArgs{
+			Metadata: &metav1.ObjectMetaArgs{
+				Name: pulumi.StringPtr("gsm-secrets"),
+			},
+		}, pulumi.Provider(k8sProvider))
+
 		// Create a GCP service account
 		account, err := serviceaccount.NewAccount(ctx, "secretAccessSvcAccount", &serviceaccount.AccountArgs{
 			Project:  pulumi.String(projectId),
@@ -78,4 +102,30 @@ func main() {
 		
 		return nil
 	})
+}
+
+// Helper function to create a kubeconfig
+func createKubeconfig(endpoint pulumi.StringOutput, projectId, clusterName string) pulumi.StringOutput {
+	// This will sync the endpoint value from the output and then create a kubeconfig
+	return endpoint.ApplyT(func(e string) string {
+		return `
+apiVersion: v1
+clusters:
+- cluster:
+    server: ` + e + `
+  name: ` + clusterName + `
+contexts:
+- context:
+    cluster: ` + clusterName + `
+    user: ` + projectId + `
+current-context: ` + clusterName + `
+kind: Config
+preferences: {}
+users:
+- name: ` + projectId + `
+  user:
+    auth-provider:
+      name: gcp
+`
+	}).(pulumi.StringOutput)
 }
